@@ -1,0 +1,160 @@
+
+2024-06-13T10:51:04.688356
+================================ System Message ================================
+
+You will get information about a codebase that is currently on disk in the current folder.
+The user will ask you to write a script that runs the code in a specific way.
+You will answer with code blocks that include all the necessary terminal commands.
+Do not install globally. Do not use sudo.
+Do not explain the code, just give the commands.
+Do not use placeholders, use example values (like . for a folder argument) if necessary.
+
+
+================================ Human Message =================================
+
+
+        Make a unix script that
+        a) installs dependencies
+        b) runs all necessary parts of the codebase (in parallel if necessary)
+        
+Information about the codebase:
+
+```
+File: requirements.txt
+1 dataclasses
+
+File: models/response.py
+1 from dataclasses import dataclass
+2 
+3 @dataclass
+4 class Message:
+5     role: str
+6     content: str
+7 
+8 @dataclass
+9 class Choice:
+10     index: int
+11     message: Message
+12     logprobs: str
+13     finish_reason: str
+14 
+15 @dataclass
+16 class Usage:
+17     prompt_tokens: int
+18     prompt_time: float
+19     completion_tokens: int
+20     completion_time: float
+21     total_tokens: int
+22     total_time: float
+23 
+24 @dataclass
+25 class SystemFingerprint:
+26     id: str
+27 
+28 @dataclass
+29 class XGroq:
+30     id: str
+31 
+32 @dataclass
+33 class Response:
+34     id: str
+35     object: str
+36     created: int
+37     model: str
+38     choices: list[Choice]
+39     usage: Usage
+40     system_fingerprint: SystemFingerprint
+41     x_groq: XGroq
+
+File: parsers/parser.py
+1 from models.response import Response, Choice, Message
+2 
+3 def parse_response(data: dict) -> Response:
+4     """
+5     Parse a response dictionary into a Response object
+6     """
+7     choices = [Choice(
+8         index=choice["index"],
+9         message=Message(
+10             role=choice["message"]["role"],
+11             content=choice["message"]["content"]
+12         ),
+13         logprobs=choice["logprobs"],
+14         finish_reason=choice["finish_reason"]
+15     ) for choice in data["choices"]]
+16     usage = Usage(
+17         prompt_tokens=data["usage"]["prompt_tokens"],
+18         prompt_time=data["usage"]["prompt_time"],
+19         completion_tokens=data["usage"]["completion_tokens"],
+20         completion_time=data["usage"]["completion_time"],
+21         total_tokens=data["usage"]["total_tokens"],
+22         total_time=data["usage"]["total_time"]
+23     )
+24     system_fingerprint = SystemFingerprint(id=data["system_fingerprint"])
+25     x_groq = XGroq(id=data["x_groq"]["id"])
+26     return Response(
+27         id=data["id"],
+28         object=data["object"],
+29         created=data["created"],
+30         model=data["model"],
+31         choices=choices,
+32         usage=usage,
+33         system_fingerprint=system_fingerprint,
+34         x_groq=x_groq
+35     )
+
+File: main.py
+1 from parsers.parser import parse_response
+2 
+3 def extract_content(response: dict) -> str:
+4     """
+5     Extract the content from a response dictionary
+6     """
+7     response_obj = parse_response(response)
+8     return response_obj.choices[0].message.content
+9 
+10 # Example usage
+11 response_data = {
+12     "id": "chatcmpl-ef674b28-e0f2-4206-a984-210e4a87bf96",
+13     "object": "chat.completion",
+14     "created": 1718274887,
+15     "model": "llama3-8b-8192",
+16     "choices": [{
+17         "index": 0,
+18         "message": {
+19             "role": "assistant",
+20             "content": "It looks like you typed \"test\"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!"
+21         },
+22         "logprobs": None,
+23         "finish_reason": "stop"
+24     }],
+25     "usage": {
+26         "prompt_tokens": 11,
+27         "prompt_time": 0.003524046,
+28         "completion_tokens": 33,
+29         "completion_time": 0.025700521,
+30         "total_tokens": 44,
+31         "total_time": 0.029224567
+32     },
+33     "system_fingerprint": "fp_873a560973",
+34     "x_groq": {
+35         "id": "req_01j08jm3hteh5s46fpgsrswvrt"
+36     }
+37 }
+38 
+39 content = extract_content(response_data)
+40 print(content)  # Output: It looks like you typed "test"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!
+
+```
+
+================================== Ai Message ==================================
+
+```
+#!/bin/bash
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the code
+python main.py
+```

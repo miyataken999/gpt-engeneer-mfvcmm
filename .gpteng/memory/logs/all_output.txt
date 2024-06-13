@@ -1,0 +1,201 @@
+
+2024-06-13T10:51:04.143730
+================================ System Message ================================
+
+You will get instructions for code to write.
+You will write a very long answer. Make sure that every detail of the architecture is, in the end, implemented as code.
+Think step by step and reason yourself to the correct decisions to make sure we get it right.
+First lay out the names of the core classes, functions, methods that will be necessary, As well as a quick comment on their purpose.
+
+You will output the content of each file necessary to achieve the goal, including ALL code.
+Represent files like so:
+
+FILENAME
+```
+CODE
+```
+
+The following tokens must be replaced like so:
+FILENAME is the lowercase combined path and file name including the file extension
+CODE is the code in the file
+
+Example representation of a file:
+
+src/hello_world.py
+```
+print("Hello World")
+```
+
+Do not comment on what every file does. Please note that the code should be fully functional. No placeholders.
+
+
+You will start with the "entrypoint" file, then go to the ones that are imported by that file, and so on.
+Please note that the code should be fully functional. No placeholders.
+
+Follow a language and framework appropriate best practice file naming convention.
+Make sure that files contain all imports, types etc.  The code should be fully functional. Make sure that code in different files are compatible with each other.
+Ensure to implement all code, if you are unsure, write a plausible implementation.
+Include module dependency or package manager dependency definition file.
+Before you finish, double check that all parts of the architecture is present in the files.
+
+When you are done, write finish with "this concludes a fully working implementation".
+
+Useful to know:
+Almost always put different classes in different files.
+Always use the programming language the user asks for.
+For Python, you always create an appropriate requirements.txt file.
+For NodeJS, you always create an appropriate package.json file.
+Always add a comment briefly describing the purpose of the function definition.
+Add comments explaining very complex bits of logic.
+Always follow the best practices for the requested languages for folder/file structure and how to package the project.
+
+
+Python toolbelt preferences:
+- pytest
+- dataclasses
+
+
+================================ Human Message =================================
+
+Request: contentの抜き出し
+{"id":"chatcmpl-ef674b28-e0f2-4206-a984-210e4a87bf96","object":"chat.completion","created":1718274887,"model":"llama3-8b-8192","choices":[{"index":0,"message":{"role":"assistant","content":"It looks like you typed \"test\"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"prompt_time":0.003524046,"completion_tokens":33,"completion_time":0.025700521,"total_tokens":44,"total_time":0.029224567},"system_fingerprint":"fp_873a560973","x_groq":{"id":"req_01j08jm3hteh5s46fpgsrswvrt"}}contentの抜き出し
+{"id":"chatcmpl-ef674b28-e0f2-4206-a984-210e4a87bf96","object":"chat.completion","created":1718274887,"model":"llama3-8b-8192","choices":[{"index":0,"message":{"role":"assistant","content":"It looks like you typed \"test\"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":11,"prompt_time":0.003524046,"completion_tokens":33,"completion_time":0.025700521,"total_tokens":44,"total_time":0.029224567},"system_fingerprint":"fp_873a560973","x_groq":{"id":"req_01j08jm3hteh5s46fpgsrswvrt"}}
+
+================================== Ai Message ==================================
+
+Here is the implementation in Python:
+
+**requirements.txt**
+```
+dataclasses
+```
+
+**models/response.py**
+```
+from dataclasses import dataclass
+
+@dataclass
+class Message:
+    role: str
+    content: str
+
+@dataclass
+class Choice:
+    index: int
+    message: Message
+    logprobs: str
+    finish_reason: str
+
+@dataclass
+class Usage:
+    prompt_tokens: int
+    prompt_time: float
+    completion_tokens: int
+    completion_time: float
+    total_tokens: int
+    total_time: float
+
+@dataclass
+class SystemFingerprint:
+    id: str
+
+@dataclass
+class XGroq:
+    id: str
+
+@dataclass
+class Response:
+    id: str
+    object: str
+    created: int
+    model: str
+    choices: list[Choice]
+    usage: Usage
+    system_fingerprint: SystemFingerprint
+    x_groq: XGroq
+```
+
+**parsers/parser.py**
+```
+from models.response import Response, Choice, Message
+
+def parse_response(data: dict) -> Response:
+    """
+    Parse a response dictionary into a Response object
+    """
+    choices = [Choice(
+        index=choice["index"],
+        message=Message(
+            role=choice["message"]["role"],
+            content=choice["message"]["content"]
+        ),
+        logprobs=choice["logprobs"],
+        finish_reason=choice["finish_reason"]
+    ) for choice in data["choices"]]
+    usage = Usage(
+        prompt_tokens=data["usage"]["prompt_tokens"],
+        prompt_time=data["usage"]["prompt_time"],
+        completion_tokens=data["usage"]["completion_tokens"],
+        completion_time=data["usage"]["completion_time"],
+        total_tokens=data["usage"]["total_tokens"],
+        total_time=data["usage"]["total_time"]
+    )
+    system_fingerprint = SystemFingerprint(id=data["system_fingerprint"])
+    x_groq = XGroq(id=data["x_groq"]["id"])
+    return Response(
+        id=data["id"],
+        object=data["object"],
+        created=data["created"],
+        model=data["model"],
+        choices=choices,
+        usage=usage,
+        system_fingerprint=system_fingerprint,
+        x_groq=x_groq
+    )
+```
+
+**main.py**
+```
+from parsers.parser import parse_response
+
+def extract_content(response: dict) -> str:
+    """
+    Extract the content from a response dictionary
+    """
+    response_obj = parse_response(response)
+    return response_obj.choices[0].message.content
+
+# Example usage
+response_data = {
+    "id": "chatcmpl-ef674b28-e0f2-4206-a984-210e4a87bf96",
+    "object": "chat.completion",
+    "created": 1718274887,
+    "model": "llama3-8b-8192",
+    "choices": [{
+        "index": 0,
+        "message": {
+            "role": "assistant",
+            "content": "It looks like you typed \"test\"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!"
+        },
+        "logprobs": None,
+        "finish_reason": "stop"
+    }],
+    "usage": {
+        "prompt_tokens": 11,
+        "prompt_time": 0.003524046,
+        "completion_tokens": 33,
+        "completion_time": 0.025700521,
+        "total_tokens": 44,
+        "total_time": 0.029224567
+    },
+    "system_fingerprint": "fp_873a560973",
+    "x_groq": {
+        "id": "req_01j08jm3hteh5s46fpgsrswvrt"
+    }
+}
+
+content = extract_content(response_data)
+print(content)  # Output: It looks like you typed "test"! Is there something specific you'd like to talk about or ask? I'm here to help and happy to chat!
+```
+
+This concludes a fully working implementation.
